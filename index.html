@@ -40,6 +40,9 @@
             let logScale=d3.scaleSymlog()
                 .domain([d3.min(popmap),d3.max(popmap)])
                 .range([0,1]);
+            let xScale=d3.scaleSymlog()
+                    .domain([d3.min(popmap),d3.max(popmap)])
+                    .range([0,302]);
 
             // Map and projection
             var projection = d3.geoMercator()
@@ -99,22 +102,32 @@
                     .attr("stop-color", d3.interpolateOranges(i * 0.1))
 
                 }
-                 var xTicks = data.filter(f => f.value % 50 === 0).map(d => d.value);
                 // legendGradient.selectAll("stop")
                 //     .data(d3.schemeOranges[9])
                 //     .enter().append("stop")
                 //     .attr("offset", d => {console.log(d); (d3.schemeOranges.indexOf(d)*10) + "%"})
                 //     .attr("stop-color", d => d);
+                let legend = {
+                    x: width-350,
+                    y: height-100,
+                    width: 302,
+                    height: 8
+                }
                 svg.append("g")
                     .append("rect")
-                    .attr("width", 302)
-                    .attr("height", 8)
+                    .attr("x", legend.x)
+                    .attr("y", legend.y)
+                    .attr("width", legend.width)
+                    .attr("height", legend.height)
                     .style("fill", "url(#legendGradient)");
-                var xAxis = d3.axisBottom(logScale)
-                    .tickSize(8 * 2)
-                    .tickValues(xTicks);
+                var xAxis = d3.axisBottom(xScale)
+                    .tickSize(8 * 2);
                 svg.append("g")
-                .call(xAxis);
+                .attr("transform", `translate(${legend.x}, ${legend.y+legend.height})`)
+                .call(xAxis)
+                .selectAll("text")
+                .attr("transform", "rotate(45)")
+                .style("text-anchor", "start");
             })  
 
         </script>
