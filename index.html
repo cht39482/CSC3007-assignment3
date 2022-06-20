@@ -15,6 +15,12 @@
         
         let svg = d3.select("svg")
             .attr("viewBox", "0 0 " + width + " " + height)
+        let legend = {
+            x: width-350,
+            y: height-100,
+            width: 300,
+            height: 8
+        }
         var population=[]
         // Load external data
         Promise.all([d3.json("sgmap.json"), d3.csv("population2021.csv")]).then(data => {
@@ -36,22 +42,7 @@
                     population.push({subzone:key.toString(),value:pop,planningArea:element["Planning Area"]});
                 }
             });
-            var popmap=d3.map(population,d=>d.value)
-            let logScale=d3.scaleSymlog()
-                .domain([d3.min(popmap),d3.max(popmap)])
-                .range([0,1]);
-
-            // Map and projection
-            var projection = d3.geoMercator()
-            .center([103.851959, 1.290270])
-            .fitExtent([[20, 20], [1000, 600]], data[0]);
-            
-            let geopath = d3.geoPath().projection(projection);
-            svg.append("path")
-                .datum({type: "Sphere"})
-                .attr("id", "ocean")
-                .attr("d", geopath)
-                .attr("fill", "lightblue");
+            //funnctions for tooltip
             var tooltip = d3.select("body")
                 .append("div")
                 .style("opacity", 0)
@@ -61,8 +52,8 @@
                 .style("opacity", 1)
             }
             var mousemove = function(event,d) {
-            var obj=population.find(r=>r.subzone.toUpperCase()==d.properties.Name)
-            tooltip
+                var obj=population.find(r=>r.subzone.toUpperCase()==d.properties.Name)
+                tooltip
                 .html("Planning Area:"+obj.planningArea+"<br>"
                 +"Population:"+obj.value+"<br>"
                 +"Subzone:"+obj.subzone
@@ -74,7 +65,28 @@
             var mouseleave = function(d) {
                 tooltip.style("opacity", 0)
             }
-            console.log(population.find(r=>r.subzone.toUpperCase()=="ADMIRALTY"));
+            //Scaling for color and legend
+            var popmap=d3.map(population,d=>d.value)
+            let logScale=d3.scaleSymlog()
+                .domain([d3.min(popmap),d3.max(popmap)])
+                .range([0,1]);
+            let xScale=d3.scaleSymlog()
+                .domain([d3.min(popmap),d3.max(popmap)])
+                .range([0,300]);
+                
+            // Map and projection
+            var projection = d3.geoMercator()
+                .center([103.851959, 1.290270])
+                .fitExtent([[20, 20], [1000, 600]], data[0]);
+            
+            let geopath = d3.geoPath().projection(projection);
+            //background
+            svg.append("path")
+                .datum({type: "Sphere"})
+                .attr("id", "ocean")
+                .attr("d", geopath)
+                .attr("fill", "lightblue");
+            //draw districts
             svg.append("g")
                 .attr("id", "districts")
                 .selectAll("path")
@@ -89,32 +101,35 @@
                 .on("mouseover", mouseover)
                 .on("mousemove", mousemove)
                 .on("mouseleave",mouseleave);
-                var legendGradient=svg
+            
+            //legend
+            var legendGradient=svg
                 .append("defs")
                 .append("linearGradient")
                 .attr("id", "legendGradient");
-                for (var i = 0; i <= 10; i++) {
-                    legendGradient.append("stop")
-                    .attr("offset",`${i * 10}%`)
-                    .attr("stop-color", d3.interpolateOranges(i * 0.1))
-
-                }
-                 var xTicks = data.filter(f => f.value % 50 === 0).map(d => d.value);
-                // legendGradient.selectAll("stop")
-                //     .data(d3.schemeOranges[9])
-                //     .enter().append("stop")
-                //     .attr("offset", d => {console.log(d); (d3.schemeOranges.indexOf(d)*10) + "%"})
-                //     .attr("stop-color", d => d);
-                svg.append("g")
-                    .append("rect")
-                    .attr("width", 302)
-                    .attr("height", 8)
-                    .style("fill", "url(#legendGradient)");
-                var xAxis = d3.axisBottom(logScale)
-                    .tickSize(8 * 2)
-                    .tickValues(xTicks);
-                svg.append("g")
-                .call(xAxis);
+                
+            legendGradient.selectAll("stop")
+                .data(d3.schemeOranges[9])
+                .enter().append("stop")
+                .attr("offset", d => {return (d3.schemeOranges[9].indexOf(d)*10 + "%")})
+                .attr("stop-color", d => d);
+                // for (var i = 0; i <= 10; i++) {
+                    //     legendGradient.append("stop")
+                    //     .attr("offset",`${i * 10}%`)
+                    //     .attr("stop-color", d3.interpolateOranges(i * 0.1))
+                    
+                    // }
+            var legendElement = svg.append("g").attr("transform", `translate(${legend.x}, ${legend.y+legend.height})`);
+            legendElement.append("rect")
+                .attr("width", legend.width)
+                .attr("height", legend.height)
+                .style("fill", "url(#legendGradient)");
+            var xAxis = d3.axisBottom(xScale)
+                .ticks(4,"~s") 
+                    
+            legendElement.append("g")
+                .call(xAxis)
+                .select(".domain").remove();
             })  
 
         </script>
