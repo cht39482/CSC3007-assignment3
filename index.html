@@ -21,7 +21,8 @@
             width: 300,
             height: 8
         }
-        var population=[]
+        var population=[]       
+
         // Load external data
         Promise.all([d3.json("sgmap.json"), d3.csv("population2021.csv")]).then(data => {
 
@@ -77,7 +78,7 @@
             // Map and projection
             var projection = d3.geoMercator()
                 .center([103.851959, 1.290270])
-                .fitExtent([[20, 20], [1000, 600]], data[0]);
+                .fitExtent([[20, 50], [1000, 550]], data[0]);
             
             let geopath = d3.geoPath().projection(projection);
             //background
@@ -86,6 +87,12 @@
                 .attr("id", "ocean")
                 .attr("d", geopath)
                 .attr("fill", "lightblue");
+            //title
+            svg.append("text")
+                .attr("id","chartTitle")
+                .attr("x", width/2)
+                .attr("y", 30)
+                .text("Population in Singapore Subdistricts");
             //draw districts
             svg.append("g")
                 .attr("id", "districts")
